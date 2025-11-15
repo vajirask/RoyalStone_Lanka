@@ -65,6 +65,35 @@ src/
 └── assets/        # Images and static assets
 ```
 
+## Deployment to GitHub Pages
+
+### Automatic Deployment (Recommended)
+
+1. **Enable GitHub Actions:**
+   - Go to your repository → **Settings** → **Pages**
+   - Under **Source**, select **GitHub Actions**
+   - The workflow will automatically deploy on every push to `main`
+
+2. **Your site will be available at:**
+   - https://vajirask.github.io/RoyalStone_Lanka/
+
+### Manual Deployment
+
+1. Build the project:
+   ```bash
+   npm run build
+   ```
+
+2. Copy `dist` folder contents to `docs` folder and push to GitHub
+
+3. Enable GitHub Pages in Settings → Pages → Source: `docs` folder
+
+### Troubleshooting
+
+- **White page?** Clear browser cache (Ctrl + Shift + R) or use incognito mode
+- **404 errors?** Make sure the base path `/RoyalStone_Lanka/` is correct
+- **Assets not loading?** Check browser console (F12) for errors
+
 ## License
 
 This project is private and proprietary.

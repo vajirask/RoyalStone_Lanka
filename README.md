@@ -1,77 +1,70 @@
-<<<<<<< HEAD
-# Welcome to your Lovable project
+# RoyalStone Lanka
 
-## Project info
+**GitHub Repository**: https://github.com/vajirask/RoyalStone_Lanka
 
-**URL**: https://lovable.dev/projects/a0f85d15-0fea-44fc-8381-51d4a0743e9b
+A modern web application for learning, identifying, and trading authentic Sri Lankan gemstones. Features expert education, AI-powered recognition, and a trusted marketplace.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- 🏪 **Marketplace**: Browse and purchase authentic Sri Lankan gemstones
+- 📚 **Education**: Learn about different gemstones and their properties
+- 🤖 **AI Recognition**: AI-powered gemstone identification
+- 👤 **User Accounts**: Login and registration system
+- 🛒 **Seller Dashboard**: Manage your gemstone listings
+- 🔐 **Admin Panel**: Administrative controls
 
-**Use Lovable**
+## Technologies
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a0f85d15-0fea-44fc-8381-51d4a0743e9b) and start prompting.
+- **Vite** - Build tool
+- **React** - UI framework
+- **TypeScript** - Type safety
+- **shadcn-ui** - UI components
+- **Tailwind CSS** - Styling
+- **React Router** - Routing
+- **TanStack Query** - Data fetching
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting Started
 
-**Use your preferred IDE**
+### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Node.js (v18 or higher)
+- npm or yarn
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+### Installation
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone the repository
+git clone https://github.com/vajirask/RoyalStone_Lanka.git
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Navigate to the project directory
+cd RoyalStone_Lanka
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Install dependencies
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start the development server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The application will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Build for Production
 
-**Use GitHub Codespaces**
+```sh
+npm run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Project Structure
 
-## What technologies are used for this project?
+```
+src/
+├── components/     # Reusable React components
+├── pages/         # Page components
+├── hooks/         # Custom React hooks
+├── lib/           # Utility functions
+└── assets/        # Images and static assets
+```
 
-This project is built with:
+## License
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/a0f85d15-0fea-44fc-8381-51d4a0743e9b) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
-=======
-# RoyalStone_Lanka
->>>>>>> 6dadcd2b1bddd1b5ba5d527ce83ea19ab4d7be71
+This project is private and proprietary.

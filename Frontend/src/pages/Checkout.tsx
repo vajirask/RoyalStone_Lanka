@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/components/ui/use-toast";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Loader2, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { getApiUrl } from "@/lib/api";
 
 const formSchema = z.object({
     fullName: z.string().min(2, "Name must be at least 2 characters"),
@@ -63,7 +64,7 @@ const Checkout = () => {
                 totalAmount: total,
             };
 
-            const response = await fetch('http://localhost:5000/api/orders', {
+            const response = await fetch(getApiUrl('/api/orders'), {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

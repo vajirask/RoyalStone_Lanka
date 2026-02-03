@@ -10,8 +10,7 @@ import * as mobilenet from "@tensorflow-models/mobilenet";
 import * as knnClassifier from "@tensorflow-models/knn-classifier";
 import { toast } from "sonner";
 import { aiManager } from "@/lib/aiModel";
-
-const API_BASE_URL = "http://localhost:5000";
+import { getApiUrl } from "@/lib/api";
 
 const AIRecognition = () => {
   const [modelLoading, setModelLoading] = useState(true);
@@ -49,7 +48,7 @@ const AIRecognition = () => {
     try {
       const img = new Image();
       img.crossOrigin = "anonymous";
-      img.src = `${API_BASE_URL}/uploads/${sample.imagePath}`;
+      img.src = getApiUrl(`/uploads/${sample.imagePath}`);
 
       const loadPromise = new Promise((resolve, reject) => {
         img.onload = resolve;
@@ -71,7 +70,7 @@ const AIRecognition = () => {
 
       const activationData = Array.from(await activation.data());
 
-      fetch(`${API_BASE_URL}/api/training/save-activation`, {
+      fetch(getApiUrl('/api/training/save-activation'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: sample._id, activationData })
@@ -87,7 +86,7 @@ const AIRecognition = () => {
 
   const syncAIWithDatabase = async (targetClassifier: knnClassifier.KNNClassifier, targetNet: mobilenet.MobileNet, isInitialSync = false) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/training/all`);
+      const res = await fetch(getApiUrl('/api/training/all'));
       const { success, data } = await res.json();
 
       if (success && data && data.length > 0) {
@@ -153,7 +152,7 @@ const AIRecognition = () => {
 
     const initializeSystem = async () => {
       try {
-        const statusRes = await fetch(`${API_BASE_URL}/api/mongodb/status`);
+        const statusRes = await fetch(getApiUrl('/api/mongodb/status'));
         const statusData = await statusRes.json();
         if (isMounted) setMongoConnected(statusData.connected);
 
@@ -222,7 +221,7 @@ const AIRecognition = () => {
         formData.append('gemType', gemType);
         formData.append('activationData', JSON.stringify(activationArray));
 
-        const res = await fetch(`${API_BASE_URL}/api/training/save`, { method: 'POST', body: formData });
+        const res = await fetch(getApiUrl('/api/training/save'), { method: 'POST', body: formData });
         const data = await res.json();
 
         if (data.success) {
@@ -245,7 +244,7 @@ const AIRecognition = () => {
 
   const handleClearTraining = async () => {
     if (confirm("Are you sure you want to clear all training data?")) {
-      await fetch(`${API_BASE_URL}/api/training/clear`, { method: 'POST' });
+      await fetch(getApiUrl('/api/training/clear'), { method: 'POST' });
       classifier?.clearAllClasses();
       loadedGemIds.current.clear();
       setTrainingStats({});

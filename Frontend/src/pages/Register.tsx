@@ -8,8 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const API_BASE_URL = "http://localhost:5000";
+import { getApiUrl } from "@/lib/api";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -49,7 +48,7 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/register`, {
+      const response = await fetch(getApiUrl('/api/register'), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password, role: formData.role })

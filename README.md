@@ -65,35 +65,23 @@ src/
 └── assets/        # Images and static assets
 ```
 
-## Deployment to GitHub Pages
+## Deployment to Vercel
 
-### Automatic Deployment (Recommended)
+1. **Push your code to GitHub**.
+2. **Import the repository into Vercel**.
+3. **Configure Project Settings**:
+   - **Framework Preset**: Vite
+   - **Build Command**: `npm run build`
+   - **Output Directory**: `Frontend/dist`
+4. **Add Environment Variables**:
+   - `MONGODB_URI`: Your MongoDB Connection String
+   - `JWT_SECRET`: A secure random string for login tokens
+   - `EMAIL_USER`: Your Gmail address
+   - `EMAIL_PASS`: Your Google App Password
+   - `VITE_API_URL`: (Optional) If you want to force a specific backend URL, though Vercel handles `/api` automatically via `vercel.json`.
 
-1. **Enable GitHub Actions:**
-   - Go to your repository → **Settings** → **Pages**
-   - Under **Source**, select **GitHub Actions**
-   - The workflow will automatically deploy on every push to `main`
-
-2. **Your site will be available at:**
-   - https://vajirask.github.io/RoyalStone_Lanka/
-
-### Manual Deployment
-
-1. Build the project:
-   ```bash
-   npm run build
-   ```
-
-2. Copy `dist` folder contents to `docs` folder and push to GitHub
-
-3. Enable GitHub Pages in Settings → Pages → Source: `docs` folder
-
-### Troubleshooting
-
-- **White page?** Clear browser cache (Ctrl + Shift + R) or use incognito mode
-- **404 errors?** Make sure the base path `/RoyalStone_Lanka/` is correct
-- **Assets not loading?** Check browser console (F12) for errors
+### Note on Image Uploads
+Vercel is a **serverless** platform, meaning files uploaded to the `Backend/uploads` folder will be deleted shortly after upload. For a production app, we recommend connecting **Cloudinary** or **AWS S3** for persistent image storage.
 
 ## License
-
 This project is private and proprietary.

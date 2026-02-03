@@ -16,6 +16,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
 const JWT_SECRET = process.env.JWT_SECRET || 'royalstone_secret_key_123';
+const EMAIL_USER = process.env.EMAIL_USER || 'vajirask249@gmail.com';
+const EMAIL_PASS = process.env.EMAIL_PASS || 'crtu wfmb ebqi dkku';
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://royalstone:roylstone1234@royalai.ftgyfay.mongodb.net/?appName=RoyalAI';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -43,8 +46,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Default connection string from user request (Standard SRV)
-const DEFAULT_MONGO_URI = 'mongodb+srv://royalstone:roylstone1234@royalai.ftgyfay.mongodb.net/?appName=RoyalAI';
+// Default connection string from env
+const DEFAULT_MONGO_URI = MONGO_URI;
 
 let isConnected = false;
 
@@ -420,8 +423,8 @@ app.post('/api/orders', async (req, res) => {
             const transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
-                    user: 'vajirask249@gmail.com',
-                    pass: 'crtu wfmb ebqi dkku'
+                    user: EMAIL_USER,
+                    pass: EMAIL_PASS
                 },
                 tls: {
                     rejectUnauthorized: false
@@ -431,8 +434,8 @@ app.post('/api/orders', async (req, res) => {
             });
 
             const mailOptions = {
-                from: 'vajirask249@gmail.com',
-                to: 'vajirask249@gmail.com',
+                from: EMAIL_USER,
+                to: EMAIL_USER,
                 subject: `💎 New Order Received: #${savedOrder.orderId} - ${savedOrder.fullName}`,
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
@@ -509,3 +512,5 @@ app.post('/api/orders', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+export default app;

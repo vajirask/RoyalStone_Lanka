@@ -4,13 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal } from "lucide-react";
 import GemCard from "@/components/GemCard";
 
 const Marketplace = () => {
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [showFilters, setShowFilters] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [selectedCarat, setSelectedCarat] = useState("any");
   const [selectedCertification, setSelectedCertification] = useState("all");
@@ -34,13 +33,7 @@ const Marketplace = () => {
     { id: "16", name: "Aquamarine", image: "https://th.bing.com/th/id/R.a62edd9af43655f7198347adff677968?rik=BFpAI2SXiUHEoA&pid=ImgRaw&r=0", price: 1100, carat: 2.5, rating: 4.5, certified: true, type: "aquamarine" },
   ];
 
-
   const filteredGemstones = gemstones.filter((gem) => {
-    // Search Filter
-    if (searchQuery && !gem.name.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-
     // Price Filter
     if (gem.price < priceRange[0] || gem.price > priceRange[1]) {
       return false;
@@ -71,34 +64,20 @@ const Marketplace = () => {
     <div className="min-h-screen bg-muted/30">
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold text-foreground">Gemstone Shop</h1>
-          <p className="text-muted-foreground">Browse authentic certified Sri Lankan gemstones</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="mb-2 text-3xl font-bold text-foreground">Gemstone Shop</h1>
+            <p className="text-muted-foreground">Browse authentic certified Sri Lankan gemstones</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className="lg:hidden"
+          >
+            <SlidersHorizontal className="mr-2 h-4 w-4" />
+            Filters
+          </Button>
         </div>
-
-        {/* Search Bar */}
-        <Card className="mb-6">
-          <CardContent className="p-4">
-            <div className="flex gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Search gemstones..."
-                  className="pl-10"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <Button
-                variant="outline"
-                onClick={() => setShowFilters(!showFilters)}
-                className="lg:hidden"
-              >
-                <SlidersHorizontal className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         <div className="grid gap-6 lg:grid-cols-4">
           {/* Filters Sidebar */}
@@ -172,7 +151,6 @@ const Marketplace = () => {
                   variant="outline"
                   onClick={() => {
                     setPriceRange([0, 10000]);
-                    setSearchQuery("");
                     setSelectedType("all");
                     setSelectedCarat("any");
                     setSelectedCertification("all");

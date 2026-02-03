@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" href="./favicon.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="./favicon.png" sizes="64x64" />
+  <link rel="apple-touch-icon" href="./favicon.png" />
+  <title>Royalstone Lanka - Authentic Sri Lankan Gemstones</title>
+
+</head>
+
+<body>
+  <div id="root"></div>
+  <script>
+    // Handle GitHub Pages SPA routing - process query parameter before React loads
+    (function () {
+      var pathSegmentsToKeep = 1;
+      var l = window.location;
+      if (l.search[1] === '/') {
+        var decoded = l.search.slice(1).split('&').map(function (s) {
+          return s.replace(/~and~/g, '&')
+        }).join('?');
+        var newPath = l.pathname.slice(0, 1 + pathSegmentsToKeep) + decoded + l.hash;
+        window.history.replaceState(null, null, newPath);
+      }
+    })();
+  </script>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

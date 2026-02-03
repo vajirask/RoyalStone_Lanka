@@ -49,28 +49,37 @@ const upload = multer({ storage });
 // Default connection string from env
 const DEFAULT_MONGO_URI = MONGO_URI;
 
-let isConnected = false;
-
 const connectDB = async (uri) => {
+    if (isConnected && mongoose.connection.readyState === 1) {
+        return true;
+    }
+
     try {
         console.log("Attempting MongoDB connection...");
-        await mongoose.connect(uri || DEFAULT_MONGO_URI, {
-            serverSelectionTimeoutMS: 5000 // Timeout quick so we don't hang
-        });
+        const targetUri = uri || process.env.MONGODB_URI || DEFAULT_MONGO_URI;
+
+        // Remove deprecated options for cleaner connection
+        await mongoose.connect(targetUri);
+
         isConnected = true;
         console.log('MongoDB Connected');
         // Seed sample users
         seedUsers();
         return true;
     } catch (err) {
-        console.error('MongoDB Connection Error (Running in Offline Mode):', err.message);
+        console.error('MongoDB Connection Error:', err.message);
         isConnected = false;
         return false;
     }
 };
 
-// Connect initially but don't await blocking
-connectDB();
+// Middleware to ensure DB is connected before handling requests
+app.use(async (req, res, next) => {
+    if (req.path.startsWith('/api/')) {
+        await connectDB();
+    }
+    next();
+});
 
 // Models
 const TrainingDataSchema = new mongoose.Schema({

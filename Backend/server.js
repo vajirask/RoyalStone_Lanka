@@ -53,26 +53,38 @@ const upload = multer({ storage });
 // Default connection string from env
 const DEFAULT_MONGO_URI = MONGO_URI;
 
+// MongoDB Connection Caching for Serverless
+let isConnected = false;
+let cachedConnection = null;
+
 const connectDB = async (uri) => {
+    // If we already have a connection, use it
     if (isConnected && mongoose.connection.readyState === 1) {
         return true;
     }
 
+    const targetUri = uri || process.env.MONGODB_URI || DEFAULT_MONGO_URI;
+
     try {
-        console.log("Attempting MongoDB connection...");
-        const targetUri = uri || process.env.MONGODB_URI || DEFAULT_MONGO_URI;
+        console.log("Attempting MongoDB connection (Optimized)...");
 
-        // Remove deprecated options for cleaner connection
-        await mongoose.connect(targetUri);
+        // In serverless, we reuse the connection promise if it exists
+        if (!cachedConnection || mongoose.connection.readyState === 0) {
+            cachedConnection = mongoose.connect(targetUri, {
+                serverSelectionTimeoutMS: 15000,
+                socketTimeoutMS: 45000,
+            });
+        }
 
+        await cachedConnection;
         isConnected = true;
-        console.log('MongoDB Connected');
-        // Seed sample users
+        console.log('✅ MongoDB Connected');
         seedUsers();
         return true;
     } catch (err) {
-        console.error('MongoDB Connection Error:', err.message);
+        console.error('❌ MongoDB Connection Error:', err.message);
         isConnected = false;
+        cachedConnection = null;
         return false;
     }
 };

@@ -35,7 +35,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter basename={import.meta.env.PROD ? "/RoyalStone_Lanka" : ""}>
+        <BrowserRouter basename={import.meta.env.VITE_BASE_PATH || "/"}>
           <div className="flex min-h-screen flex-col">
             <Navbar />
             <main className="flex-1">

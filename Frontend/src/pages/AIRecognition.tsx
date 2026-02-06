@@ -1,4 +1,48 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+
+const GEM_INFO: Record<string, { description: string; color: string }> = {
+  "Blue Sapphire": {
+    color: "Blue",
+    description: "The most famous Sri Lankan gemstone. Known for its 'Cornflower' and 'Royal' blue hues. It represents wisdom and royalty."
+  },
+  "Ruby": {
+    color: "Red",
+    description: "A precious variety of corundum. Sri Lankan rubies are often more pinkish-red than Burmese ones and are prized for their brilliance."
+  },
+  "Emerald": {
+    color: "Green",
+    description: "A variety of beryl. While rare in Sri Lanka, it is highly valued for its lush green color symbolising rebirth."
+  },
+  "Cat's Eye": {
+    color: "Golden/Honey",
+    description: "A rare chrysoberyl that shows a sharp line of light across the center, looking like a real cat's eye."
+  },
+  "Alexandrite": {
+    color: "Green to Red",
+    description: "Extremely rare 'emerald by day, ruby by night' stone that changes color depending on the light source."
+  },
+  "Spinel": {
+    color: "Various",
+    description: "Found in many colors in Sri Lanka. It is often mistaken for Ruby or Sapphire due to its high brilliance."
+  },
+  "Amethyst": {
+    color: "Purple",
+    description: "A beautiful purple variety of quartz. It has been used in jewelry for centuries to represent clarity and calm."
+  },
+  "Topaz": {
+    color: "Blue/Yellow",
+    description: "A hard gemstone available in many colors. Blue Topaz is very popular for modern jewelry."
+  },
+  "Diamond": {
+    color: "Clear",
+    description: "The hardest natural substance on Earth. Known for its unmatched sparkle and timeless value."
+  },
+  "Pearl": {
+    color: "White/Cream",
+    description: "A biological gemstone formed inside oysters. Sri Lankan pearls are historically famous for their luster."
+  }
+};
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Sparkles, Camera, Trash2, Database, AlertCircle } from "lucide-react";
@@ -39,9 +83,13 @@ const AIRecognition = () => {
   const imageRef = useRef<HTMLImageElement>(null);
   const loadedGemIds = useRef<Set<string>>(new Set());
 
+  const navigate = useNavigate();
+
   const isAdmin = user?.role?.toLowerCase() === 'admin' || user?.email === 'admin@royalstone.com';
   const showTraining = isAdmin;
   const showIdentification = true;
+
+  const currentGemDetail = result ? GEM_INFO[result.label] : null;
 
   const recalculateOne = async (sample: any, targetNet: mobilenet.MobileNet) => {
     let timeoutId: any;
@@ -417,6 +465,26 @@ const AIRecognition = () => {
                     <h3 className="text-2xl font-bold text-primary">{result.label}</h3>
                     <p className="text-sm font-medium mt-1">{result.confidence.toFixed(1)}% Confidence</p>
                     <Progress value={result.confidence} className="mt-4 h-2" />
+
+                    {currentGemDetail && (
+                      <div className="mt-6 border-t border-primary/20 pt-6 text-left">
+                        <div className="flex items-center justify-between mb-2">
+                          <h4 className="font-bold text-foreground">Gem Details</h4>
+                          <span className="text-xs px-2 py-1 bg-primary/20 text-primary rounded-full font-semibold uppercase">{currentGemDetail.color}</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed">
+                          {currentGemDetail.description}
+                        </p>
+                        <Button
+                          variant="link"
+                          className="mt-2 p-0 h-auto text-primary font-semibold"
+                          onClick={() => navigate('/education')}
+                        >
+                          Learn more in Gem Guide →
+                        </Button>
+                      </div>
+                    )}
+
                     <div className="mt-6 text-left space-y-2">
                       <p className="text-xs font-semibold text-muted-foreground uppercase">Top Matches</p>
                       {result.allPredictions.map(([l, c]) => (

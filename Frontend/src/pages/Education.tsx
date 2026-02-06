@@ -15,7 +15,33 @@ const Education = () => {
     { name: "Moonstone", color: "White/Blue", description: "Known for its adularescence, a ghostly sheen that moves across the stone." },
     { name: "Garnet", color: "Red/Green", description: "A group of silicate minerals. While often red, rare green Tsavorite garnets are highly prized." },
     { name: "Aquamarine", color: "Light Blue", description: "A blue-green variety of beryl, named after the color of seawater." },
+    { name: "Tourmaline", color: "Multi-color", description: "Available in almost every color of the rainbow. Sri Lankan pink and green varieties are world-famous." },
+    { name: "Zircon", color: "Various", description: "The oldest mineral on Earth. Sri Lankan Zircons, especially the blue and 'Starlight' varieties, are highly brilliant." },
+    { name: "Amethyst", color: "Purple", description: "The most precious variety of quartz, ranging from deep violet to pale lavender." },
+    { name: "Citrine", color: "Yellow/Orange", description: "A vibrant golden quartz stone associated with success and prosperity." },
+    { name: "Iolite", color: "Violet-Blue", description: "Also known as 'Water Sapphire' for its intense blue-violet color and strong pleochroism." },
+    { name: "Peridot", color: "Olive Green", description: "A beautiful olive-green gemstone that forms deep within the earth's mantle." },
+    { name: "Morganite", color: "Pink/Peach", description: "The pink to orange-pink variety of beryl, known for its soft, feminine hues." },
+    { name: "Chrysoberyl", color: "Honey/Green", description: "A very hard and durable stone. The yellow-green variety is prized for its high brilliance." },
+    { name: "Hessonite", color: "Cinnamon", description: "A variety of garnet known for its characteristic 'honey and oil' internal appearance." },
+    { name: "Rose Quartz", color: "Soft Pink", description: "The stone of universal love, known for its soft translucent pink color." }
   ];
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      const offset = 100; // Account for fixed navbar
+      const bodyRect = document.body.getBoundingClientRect().top;
+      const elementRect = element.getBoundingClientRect().top;
+      const elementPosition = elementRect - bodyRect;
+      const offsetPosition = elementPosition - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -44,19 +70,20 @@ const Education = () => {
 
         <div className="grid gap-8 lg:grid-cols-4">
           {/* Sidebar */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:sticky lg:top-24 h-fit max-h-[80vh] overflow-y-auto pr-2 scrollbar-thin">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Categories</CardTitle>
+                <CardTitle className="text-lg">Categories ({gemTypes.length})</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
                 {gemTypes.map((gem) => (
                   <button
                     key={gem.name}
-                    className="flex w-full items-center justify-between rounded-lg p-3 text-left transition-colors hover:bg-muted"
+                    onClick={() => scrollToSection(gem.name.toLowerCase().replace(/\s+/g, '-'))}
+                    className="flex w-full items-center justify-between rounded-lg p-3 text-left transition-colors hover:bg-muted active:scale-[0.98]"
                   >
                     <span className="font-medium text-foreground">{gem.name}</span>
-                    <Badge variant="secondary">{gem.color}</Badge>
+                    <Badge variant="secondary" className="text-[10px]">{gem.color}</Badge>
                   </button>
                 ))}
               </CardContent>
@@ -89,49 +116,40 @@ const Education = () => {
             {/* Gem Type Cards */}
             <div className="space-y-6">
               {gemTypes.map((gem) => (
-                <Card key={gem.name}>
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-xl">{gem.name}</CardTitle>
-                      <Badge className="bg-primary">{gem.color}</Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-muted-foreground">{gem.description}</p>
+                <div key={gem.name} id={gem.name.toLowerCase().replace(/\s+/g, '-')} className="scroll-mt-24">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-xl">{gem.name}</CardTitle>
+                        <Badge className="bg-primary">{gem.color}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <p className="text-muted-foreground">{gem.description}</p>
 
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-foreground">Key Characteristics:</h4>
-                      <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                        <li>Chemical composition and crystal structure</li>
-                        <li>Color variations and grading</li>
-                        <li>Clarity characteristics and inclusions</li>
-                        <li>Cut styles and proportions</li>
-                        <li>Treatment methods and detection</li>
-                      </ul>
-                    </div>
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-foreground">Key Characteristics:</h4>
+                        <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                          <li>Chemical composition and crystal structure</li>
+                          <li>Color variations and grading</li>
+                          <li>Clarity characteristics and inclusions</li>
+                          <li>Cut styles and proportions</li>
+                          <li>Treatment methods and detection</li>
+                        </ul>
+                      </div>
 
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-foreground">Identification Tips:</h4>
-                      <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                        <li>Visual inspection techniques</li>
-                        <li>Testing for hardness and specific gravity</li>
-                        <li>Examining under different light sources</li>
-                        <li>Using gemological instruments</li>
-                      </ul>
-                    </div>
-
-                    <div className="space-y-2">
-                      <h4 className="font-semibold text-foreground">Value Factors:</h4>
-                      <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                        <li>Color intensity and saturation</li>
-                        <li>Clarity and transparency</li>
-                        <li>Carat weight and size</li>
-                        <li>Cut quality and proportions</li>
-                        <li>Origin and certification</li>
-                      </ul>
-                    </div>
-                  </CardContent>
-                </Card>
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-foreground">Identification Tips:</h4>
+                        <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                          <li>Visual inspection techniques</li>
+                          <li>Testing for hardness and specific gravity</li>
+                          <li>Examining under different light sources</li>
+                          <li>Using gemological instruments</li>
+                        </ul>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               ))}
             </div>
           </div>

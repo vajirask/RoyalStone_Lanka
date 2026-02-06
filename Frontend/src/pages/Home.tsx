@@ -3,10 +3,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "react-router-dom";
 import { GraduationCap, Search, ShoppingBag, Award, TrendingUp, Shield, Target, Rocket } from "lucide-react";
 import GemCard from "@/components/GemCard";
-import heroImage from "@/assets/hero-sapphire.jpg";
-import rubyGem from "@/assets/ruby-gem.jpg";
-import catsEyeGem from "@/assets/cats-eye-gem.jpg";
-import emeraldGem from "@/assets/emerald-gem.jpg";
 
 const Home = () => {
   const features = [
@@ -37,10 +33,10 @@ const Home = () => {
   ];
 
   const trendingGems = [
-    { id: "1", name: "Blue Sapphire", image: heroImage, price: 5200, carat: 2.5, rating: 4.8, certified: true },
-    { id: "2", name: "Ruby", image: rubyGem, price: 3800, carat: 1.8, rating: 4.9, certified: true },
-    { id: "3", name: "Cat's Eye", image: catsEyeGem, price: 2100, carat: 3.2, rating: 4.7, certified: true },
-    { id: "4", name: "Emerald", image: emeraldGem, price: 4500, carat: 2.0, rating: 4.8, certified: false },
+    { id: "1", name: "Blue Sapphire", image: "https://tse1.mm.bing.net/th/id/OIP.ihj5Mlq3LBsoCKg3dybbogHaHa?rs=1&pid=ImgDetMain&o=7&rm=3", price: 5200, carat: 2.5, rating: 4.8, certified: true },
+    { id: "2", name: "Ruby", image: "https://img.freepik.com/premium-photo/crystal-ruby-gem-isolated-black-background_107173-26699.jpg", price: 3800, carat: 1.8, rating: 4.9, certified: true },
+    { id: "3", name: "Cat's Eye", image: "https://thevimoksha.com/wp-content/uploads/2024/08/Cat_s-Eye-Gemstone_2.jpg", price: 2100, carat: 3.2, rating: 4.7, certified: true },
+    { id: "4", name: "Emerald", image: "https://img.freepik.com/premium-photo/emerald-gemstone-isolated-white-background-jewelry-shop-beauty-close-up-shot_685067-2981.jpg?w=2000", price: 4500, carat: 2.0, rating: 4.8, certified: false },
   ];
 
   return (

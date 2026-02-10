@@ -33,3 +33,7 @@ dist-ssr
 build
 *.tsbuildinfo
 
+# Project specific ignores
+presentation.md
+get_hash.js
+Backend/uploads/*

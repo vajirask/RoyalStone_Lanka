@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { Facebook, Instagram, Twitter, Mail, MapPin, Phone, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 
 const Footer = () => {
   return (
@@ -98,7 +99,17 @@ const Footer = () => {
                 <div className="rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 p-5 border border-primary/10 shadow-inner">
                   <p className="font-semibold text-foreground mb-1">Newsletter</p>
                   <p className="text-xs mb-3">Get exotic gemstone insights monthly.</p>
-                  <button className="text-xs font-bold text-primary flex items-center gap-1 group">
+                  <button
+                    onClick={() => {
+                      const user = localStorage.getItem("user");
+                      if (user) {
+                        toast.success("Thank you for subscribing to our newsletter!");
+                      } else {
+                        toast.error("Please login or register to subscribe to our newsletter!");
+                      }
+                    }}
+                    className="text-xs font-bold text-primary flex items-center gap-1 group focus:outline-none transition-opacity hover:opacity-80"
+                  >
                     Subscribe Now <ExternalLink className="h-3 w-3 transition-transform group-hover:translate-x-1" />
                   </button>
                 </div>
@@ -109,7 +120,7 @@ const Footer = () => {
 
         <div className="mt-16 flex flex-col items-center justify-between border-t border-border/50 pt-8 sm:flex-row">
           <p className="text-sm text-muted-foreground">
-            © 2024 <span className="font-semibold text-foreground">Royalstone Lanka</span>. Crafted for Excellence.
+            © 2026 <span className="font-semibold text-foreground">Royalstone Lanka</span>. Crafted for Excellence.
           </p>
           <div className="mt-4 flex space-x-6 sm:mt-0">
             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Approved by SL Gem Auth</span>

@@ -103,18 +103,8 @@ const Register = () => {
             <Label htmlFor="confirmPassword">Confirm Password</Label>
             <Input id="confirmPassword" type="password" value={formData.confirmPassword} onChange={handleChange} disabled={loading} />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="role">Account Role</Label>
-            <Select value={formData.role} onValueChange={handleRoleChange} disabled={loading}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select Role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">User (Identifies Gems)</SelectItem>
-                <SelectItem value="admin">Admin (Trains Model)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Account Role selection removed for security - all new registrations default to 'user' */}
+          <input type="hidden" value="user" />
           <Button className="w-full" size="lg" onClick={handleRegister} disabled={loading}>
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create Account"}
           </Button>

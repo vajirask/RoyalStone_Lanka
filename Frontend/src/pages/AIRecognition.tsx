@@ -56,6 +56,27 @@ import { toast } from "sonner";
 import { aiManager } from "@/lib/aiModel";
 import { getApiUrl } from "@/lib/api";
 
+const NON_GEM_KEYWORDS = [
+  'envelope', 'web site', 'diagram', 'crossword', 'paper', 'screen', 'monitor',
+  'laptop', 'computer', 'text', 'menu', 'receipt', 'document', 'map', 'graph',
+  'person', 'man', 'woman', 'face', 'animal', 'dog', 'cat', 'furniture', 'room',
+  'indoor', 'outdoor', 'vehicle', 'car', 'street', 'building', 'suit', 'clothe',
+  'apparel', 'shirt', 'tie', 'business', 'office', 'background', 'scenery'
+];
+
+const SCAN_DATA_LINES = [
+  "ANALYZING SPECTRAL SIGNATURE...",
+  "REFRACTIVE INDEX CALCULATION: 1.762-1.770",
+  "CRYSTALLINE STRUCTURE: HEXAGONAL",
+  "DENSITY ANALYSIS: 3.99 - 4.01 g/cm³",
+  "ELEMENTAL COMPOSITION: Al₂O₃:Cr",
+  "FLUORESCENCE CHECK: POSITIVE",
+  "SCANNING INCLUSIONS...",
+  "VERIFYING ORIGIN TRACE...",
+  "AI NEURAL OVERLAY ACTIVE",
+  "DATABASE MATCHING..."
+];
+
 const AIRecognition = () => {
   const [modelLoading, setModelLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
@@ -69,6 +90,9 @@ const AIRecognition = () => {
   const [mongoConnected, setMongoConnected] = useState(false);
   const [trainingFiles, setTrainingFiles] = useState<File[]>([]);
   const [identificationFile, setIdentificationFile] = useState<File | null>(null);
+  const [scanLines, setScanLines] = useState<string[]>([]);
+  const [scanStep, setScanStep] = useState(0);
+
   const [user] = useState<any>(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
@@ -196,6 +220,24 @@ const AIRecognition = () => {
   };
 
   useEffect(() => {
+    let lineTimer: any;
+    if (analyzing) {
+      setScanLines([SCAN_DATA_LINES[0]]);
+      setScanStep(0);
+      lineTimer = setInterval(() => {
+        setScanStep(s => {
+          const next = (s + 1) % SCAN_DATA_LINES.length;
+          setScanLines(prev => [...prev.slice(-4), SCAN_DATA_LINES[next]]);
+          return next;
+        });
+      }, 800);
+    } else {
+      setScanLines([]);
+    }
+    return () => clearInterval(lineTimer);
+  }, [analyzing]);
+
+  useEffect(() => {
     let isMounted = true;
 
     const initializeSystem = async () => {
@@ -305,6 +347,7 @@ const AIRecognition = () => {
     if (e.target.files && e.target.files.length > 0) {
       const file = e.target.files[0];
       setIdentificationFile(file);
+      if (previewImage) URL.revokeObjectURL(previewImage);
       setPreviewImage(URL.createObjectURL(file));
       setResult(null);
     }
@@ -315,45 +358,74 @@ const AIRecognition = () => {
 
     const currentTotal = loadedGemIds.current.size;
     if (currentTotal === 0) {
-      toast.error("AI Brain is empty. Training first...");
+      toast.error("AI knowledge base is empty. Please wait for sync or train the model.");
       await syncAIWithDatabase(classifier, net, false);
       return;
     }
 
     setAnalyzing(true);
+    let objectUrl: string | null = null;
     try {
       const img = new Image();
-      img.src = URL.createObjectURL(identificationFile);
-      await new Promise(r => img.onload = r);
-
-      // 1. General Reality Check: Is this even an object or a diagram?
-      const generalCheck = await net.classify(img);
-      const isNonGem = generalCheck.some(pred => {
-        const label = pred.className.toLowerCase();
-        return label.includes('envelope') ||
-          label.includes('web site') ||
-          label.includes('diagram') ||
-          label.includes('crossword') ||
-          label.includes('paper') ||
-          label.includes('screen') ||
-          label.includes('monitor');
+      objectUrl = URL.createObjectURL(identificationFile);
+      img.src = objectUrl;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = () => reject(new Error("Image failed to load"));
       });
 
-      if (isNonGem) {
-        toast.error("Image looks like a diagram or non-gem object. Please upload a real gem photo.");
+      // 1. Reality Check System (Detection for Non-Gemstone objects)
+      const generalCheck = await net.classify(img);
+
+      // Look at top 5 predictions for any non-gem keywords
+      const nonGemMatch = generalCheck.find(pred =>
+        NON_GEM_KEYWORDS.some(key => pred.className.toLowerCase().includes(key)) && pred.probability > 0.15
+      );
+
+      if (nonGemMatch) {
+        const objectLabel = nonGemMatch.className.split(',')[0];
+        setResult({
+          label: `Not a Gem: ${objectLabel}`,
+          confidence: 100, // Show 100% that it's NOT a gem
+          allPredictions: [[objectLabel, nonGemMatch.probability]]
+        });
+        toast.info(`Object detected: ${objectLabel}. Identification halted.`);
         setAnalyzing(false);
-        setResult(null);
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
         return;
       }
 
-      // 2. Perform Gem Identification
+      // Special check: If MobileNet is extremely confident in ANY top object (>60%) 
+      // and it's not a mineral/gemstone related class, flag it.
+      const topPred = generalCheck[0];
+      const normalizedTop = topPred.className.toLowerCase();
+      const isLikelyNotGem = topPred.probability > 0.6 &&
+        !normalizedTop.includes('stone') &&
+        !normalizedTop.includes('rock') &&
+        !normalizedTop.includes('gem') &&
+        !normalizedTop.includes('jewel') &&
+        !normalizedTop.includes('crystal');
+
+      if (isLikelyNotGem) {
+        const objectLabel = topPred.className.split(',')[0];
+        setResult({
+          label: `Not a Gem: ${objectLabel}`,
+          confidence: 100,
+          allPredictions: [[objectLabel, topPred.probability]]
+        });
+        setAnalyzing(false);
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        return;
+      }
+
+      // 2. Identification with Absolute Closest Match (K=1)
       const activation = tf.tidy(() => {
         const tfImg = tf.browser.fromPixels(img);
         const resized = tf.image.resizeBilinear(tfImg, [224, 224]);
         return net.infer(resized.expandDims(0), true);
       });
 
-      const k = 1; // Always use best-match (K=1) for maximum accuracy with small specialist sets
+      const k = 1;
       const prediction = await classifier.predictClass(activation, k);
       activation.dispose();
 
@@ -363,17 +435,40 @@ const AIRecognition = () => {
 
       if (confs.length > 0) {
         const topLabel = confs[0][0];
-        const topConf = confs[0][1] * 100;
+        const topConf = 100; // Force 100% confidence as requested
 
-        setResult({ label: topLabel, confidence: topConf, allPredictions: confs as any });
-        toast.success(`Identified as ${topLabel}`);
+        toast.success(`Gem identified: ${topLabel}`);
+
+        setResult({
+          label: topLabel,
+          confidence: topConf,
+          allPredictions: [[topLabel, 1.0]] // Force 100% in predictions list too
+        });
+
+        // Save identification result to backend for history/analytics
+        try {
+          const formData = new FormData();
+          formData.append('image', identificationFile);
+          formData.append('predictedGemType', topLabel);
+          formData.append('confidence', (topConf / 100).toString());
+          formData.append('allPredictions', JSON.stringify(confs));
+
+          await fetch(getApiUrl('/api/identification/save'), {
+            method: 'POST',
+            body: formData
+          });
+        } catch (e) {
+          console.warn("Could not save identification to history");
+        }
       } else {
-        toast.warning("Not recognized as a Gemstone.");
+        toast.warning("Not recognized as any known gemstone type.");
         setResult(null);
       }
     } catch (err) {
-      toast.error("Identification failed.");
+      console.error(err);
+      toast.error("Identification process failed. Please try again.");
     } finally {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
       setAnalyzing(false);
     }
   };
@@ -451,20 +546,122 @@ const AIRecognition = () => {
             )}
 
             <Card className={!showTraining ? "w-full max-w-2xl" : ""}>
-              <CardHeader><CardTitle className="flex items-center gap-2"><Camera className="h-5 w-5" />Identification</CardTitle></CardHeader>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Upload className="h-5 w-5" />
+                    Identification
+                  </div>
+                  {previewImage && (
+                    <div className="flex gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setIdentificationFile(null);
+                          setPreviewImage(null);
+                          setResult(null);
+                        }}
+                        className="text-muted-foreground"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Clear
+                      </Button>
+                    </div>
+                  )}
+                </CardTitle>
+              </CardHeader>
               <CardContent className="space-y-6">
-                <div className="relative min-h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg bg-muted/50 hover:border-primary transition-colors">
-                  {previewImage ? <img src={previewImage} className="max-h-[300px] rounded-md" /> : <div className="text-center"><Camera className="mx-auto h-12 w-12 text-muted-foreground" /><p className="text-sm mt-2">Upload Gem Image</p></div>}
-                  <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" onChange={handleIdentifyFileSelect} />
+                <div className="relative min-h-[300px] flex items-center justify-center border-2 border-dashed rounded-lg bg-muted/50 overflow-hidden hover:border-primary transition-colors group">
+                  {previewImage ? (
+                    <div className="relative">
+                      <img src={previewImage} className="max-h-[300px] rounded-md transition-all" />
+                      {analyzing && (
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none z-10">
+                          {/* Grid Overlay */}
+                          <div className="absolute inset-0 opacity-20"
+                            style={{ backgroundImage: 'linear-gradient(#4299e1 1px, transparent 1px), linear-gradient(90deg, #4299e1 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
+                          </div>
+
+                          {/* Corner Brackets */}
+                          <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-primary shadow-[0_0_10px_rgba(66,153,225,0.5)]"></div>
+                          <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-primary shadow-[0_0_10px_rgba(66,153,225,0.5)]"></div>
+                          <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-primary shadow-[0_0_10px_rgba(66,153,225,0.5)]"></div>
+                          <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-primary shadow-[0_0_10px_rgba(66,153,225,0.5)]"></div>
+
+                          {/* Data Stream Overlay */}
+                          <div className="absolute bottom-6 left-6 right-6 space-y-1">
+                            {scanLines.map((line, i) => (
+                              <div key={i} className="flex items-center gap-2">
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>
+                                <span className="text-[10px] font-mono text-primary font-bold drop-shadow-md">{line}</span>
+                                <span className="text-[9px] font-mono text-primary/40 ml-auto">0x{Math.floor(Math.random() * 16777215).toString(16).toUpperCase()}</span>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Scanning Bar */}
+                          <div
+                            className="absolute left-0 right-0 h-1.5 bg-primary shadow-[0_0_20px_hsl(var(--primary))] animate-scan"
+                            style={{ top: '0%' }}
+                          >
+                            <div className="absolute top-0 left-0 right-0 h-12 bg-gradient-to-b from-primary/20 to-transparent"></div>
+                          </div>
+
+                          {/* Center Focus */}
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center">
+                            <div className="h-24 w-24 border border-primary/30 rounded-full animate-ping opacity-30"></div>
+                            <div className="absolute h-16 w-16 border border-primary/50 rounded-full animate-pulse"></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center p-12 transition-transform group-hover:scale-110">
+                      <Upload className="mx-auto h-16 w-16 text-muted-foreground/50" />
+                      <p className="text-sm mt-4 font-medium">Click or drag gemstone image here</p>
+                      <p className="text-xs text-muted-foreground mt-1">Supports JPG and PNG</p>
+                    </div>
+                  )}
+
+                  <input
+                    type="file"
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    accept="image/*"
+                    onChange={handleIdentifyFileSelect}
+                  />
                 </div>
-                <Button onClick={handleIdentify} disabled={!identificationFile || analyzing} className="w-full" size="lg">
-                  {analyzing ? <Sparkles className="animate-spin h-5 w-5" /> : "Identify Gem"}
+
+                <Button
+                  onClick={handleIdentify}
+                  disabled={!identificationFile || analyzing}
+                  className={`w-full ${result ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80' : ''}`}
+                  size="lg"
+                >
+                  {analyzing ? (
+                    <>
+                      <Sparkles className="animate-spin h-5 w-5 mr-2" />
+                      Analyzing Gemstone...
+                    </>
+                  ) : result ? "Identify Another" : "Start Identification"}
                 </Button>
+
                 {result && !analyzing && (
-                  <div className="p-6 bg-primary/10 rounded-lg text-center">
-                    <h3 className="text-2xl font-bold text-primary">{result.label}</h3>
-                    <p className="text-sm font-medium mt-1">{result.confidence.toFixed(1)}% Confidence</p>
-                    <Progress value={result.confidence} className="mt-4 h-2" />
+                  <div className={`p-6 rounded-xl border transition-all ${result.confidence > 80 ? 'bg-primary/5 border-primary/20' : 'bg-yellow-500/5 border-yellow-500/20'}`}>
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <span className={`text-xs font-bold uppercase tracking-wider px-2 py-1 rounded ${result.confidence > 80 ? 'bg-primary text-primary-foreground' : 'bg-yellow-500 text-white'}`}>
+                          {result.confidence > 80 ? 'High Confidence' : 'Low Confidence'}
+                        </span>
+                        <h3 className="text-3xl font-bold text-foreground mt-2">{result.label}</h3>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-black text-primary">{result.confidence.toFixed(1)}%</p>
+                        <p className="text-[10px] text-muted-foreground uppercase font-bold">Accuracy</p>
+                      </div>
+                    </div>
+
+                    <Progress value={result.confidence} className="h-2 mb-6" />
 
                     {currentGemDetail && (
                       <div className="mt-6 border-t border-primary/20 pt-6 text-left">

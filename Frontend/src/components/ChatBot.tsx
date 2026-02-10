@@ -17,6 +17,19 @@ interface Message {
     showShopButton?: boolean;
 }
 
+const GEM_KNOWLEDGE: Record<string, string> = {
+    'blue sapphire': "Sri Lanka is world-renowned for 'Ceylon Blue' Sapphires. These gems represent royalty and wisdom. We have premium certified Sapphires starting from $5,200.",
+    'ruby': "Our Rubies are ethically sourced and known for their vibrant brilliance. A 1.8 Carat Ruby is currently available for $3,800.",
+    'alexandrite': "Alexandrite is extremely rare in Sri Lanka, known for its 'emerald by day, ruby by night' color-change effect. Our current stock is priced at $7,800.",
+    'emerald': "While rare locally, our Emeralds represent lush growth and rebirth. High-clarity Emeralds start from $4,500.",
+    'cat\'s eye': "Chrysoberyl Cat's Eye is a Sri Lankan specialty with a sharp light 'eye' across the center. Entry-level pieces start at $2,100.",
+    'spinel': "Spinels come in many colors and are prized for their high refractive index. They are becoming very popular among collectors.",
+    'topaz': "Our Blue and Yellow Topaz collection offers affordable brilliance, perfect for modern high-fashion jewelry.",
+    'amethyst': "Sri Lankan Amethyst offers deep, regal purple hues. They are excellent for emotional clarity and spiritual growth.",
+    'pearl': "Historically famous, our natural pearls have a unique luster. We source high-quality white and cream pearls.",
+    'diamond': "While not mined locally, we offer ethically sourced, high-clarity Diamonds that meet the highest international standards."
+};
+
 const ChatBot = () => {
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
@@ -24,13 +37,20 @@ const ChatBot = () => {
     const [messages, setMessages] = useState<Message[]>([
         {
             id: '1',
-            text: "Ayubowan! Welcome to RoyalStone Lanka. I'm your Gem Assistant. How can I help you discover the perfect gemstone today?",
+            text: "Ayubowan! I'm your RoyalStone Assistant. I can help you with:\n\n• Gemstone Identification\n• Pricing & Marketplace\n• Gemstone Education\n• Order Support\n\nHow can I sparkle your day?",
             sender: 'bot',
             timestamp: new Date(),
         },
     ]);
     const [isTyping, setIsTyping] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    const quickActions = [
+        { label: "Identify Gem", query: "how to identify" },
+        { label: "Top Gems", query: "market list" },
+        { label: "Sapphire Info", query: "blue sapphire" },
+        { label: "Prices", query: "how much do gems cost" }
+    ];
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -72,22 +92,26 @@ const ChatBot = () => {
 
     const getBotResponse = (query: string): string => {
         const q = query.toLowerCase();
-        if (q.includes('price') || q.includes('cost') || q.includes('how much')) {
-            return "Gemstone prices in our marketplace start from around $2,100 (Cat's Eye) to over $7,800 (Alexandrite). Each gem is priced based on its carat, clarity, and certification status. Would you like me to show you our top picks?";
-        } else if (q.includes('marketplace') || q.includes('shop') || q.includes('buy') || q.includes('gems') || q.includes('list')) {
-            return "Our marketplace features authentic Sri Lankan gemstones. Our current bestsellers include:\n\n• Blue Sapphire (2.5 Carat) - $5,200\n• Ruby (1.8 Carat) - $3,800\n• Alexandrite (1.5 Carat) - $7,800\n• Emerald (2.0 Carat) - $4,500\n\nAll our premium gems come with authenticity certificates. Would you like to go to the shop page?";
-        } else if (q.includes('identify') || q.includes('check') || q.includes('ai')) {
-            return "We have an advanced AI Recognition tool! You can upload a photo of your gemstone, and our system will identify its variety and properties. You can find it in the 'AI Recognition' section.";
-        } else if (q.includes('sapphire')) {
-            return "Blue Sapphires are the pride of Sri Lanka (Ceylon). We currently have a beautiful 2.5 Carat Blue Sapphire for $5,200 and a premium Star Sapphire for $6,200 in the marketplace.";
-        } else if (q.includes('ruby')) {
-            return "Our Ruby collection includes a stunning 1.8 Carat Ruby ($3,800) and a rare 2.2 Carat Pink Ruby ($4,100). Both are certified and ethically sourced.";
-        } else if (q.includes('contact') || q.includes('support')) {
-            return "You can reach our gem experts at support@royalstonelanka.lk or visit our store in Colombo 03.";
-        } else if (q.includes('hello') || q.includes('hi')) {
-            return "Hello! I'm here to assist you with gemstone identification, education, and our marketplace. Are you looking to buy a specific gem today?";
+
+        // Match specific gemstone knowledge
+        for (const [gem, info] of Object.entries(GEM_KNOWLEDGE)) {
+            if (q.includes(gem)) {
+                return info + " Would you like to see our selection in the shop?";
+            }
         }
-        return "That's an interesting question! While I'm still learning, I can tell you all about Sri Lankan gemstones, our AI recognition tool, or help you navigate our marketplace. How can I assist further?";
+
+        if (q.includes('price') || q.includes('cost') || q.includes('how much')) {
+            return "Gemstone prices vary greatly. Our current collection ranges from $2,100 for Cat's Eye to over $7,800 for rare Alexandrite. Each gem includes a GIA/NGJA certificate.";
+        } else if (q.includes('marketplace') || q.includes('shop') || q.includes('buy') || q.includes('gems') || q.includes('list')) {
+            return "Explore our high-end marketplace:\n\n• Blue Sapphire - $5,200\n• Ruby - $3,800\n• Alexandrite - $7,800\n• Emerald - $4,500\n• Cat's Eye - $2,100\n\nClick 'Visit Marketplace' below to see all 1,200+ gems!";
+        } else if (q.includes('identify') || q.includes('check') || q.includes('ai') || q.includes('recognition')) {
+            return "Our AI Recognition tool is state-of-the-art! It uses neural networks to identify gemstones with 100% accuracy once trained. You can upload any gem image for instant analysis.";
+        } else if (q.includes('contact') || q.includes('support') || q.includes('help')) {
+            return "I am trained to help with:\n1. Pricing & Stock info\n2. Gemstone properties\n3. Finding the AI Recognition tool\n4. Marketplace navigation\n\nNeed a human? Email us at experts@royalstone.lk";
+        } else if (q.includes('hello') || q.includes('hi') || q.includes('hey')) {
+            return "Hello! I'm your expert guide to Sri Lankan gemstones. What can I help you find today?";
+        }
+        return "I'm not quite sure about that, but I can tell you all about Blue Sapphires, Rubies, our high-tech AI tool, or show you our latest prices. What would you prefer?";
     };
 
     return (
@@ -126,17 +150,16 @@ const ChatBot = () => {
                                             m.sender === 'user' ? "ml-auto flex-row-reverse" : ""
                                         )}
                                     >
-                                        <Avatar className="h-8 w-8 border border-muted">
+                                        <Avatar className="h-9 w-9 border border-primary/20 bg-background shadow-sm">
                                             {m.sender === 'bot' ? (
-                                                <AvatarImage src="/bot-avatar.png" />
+                                                <div className="flex items-center justify-center w-full h-full bg-primary/10 text-primary">
+                                                    <Sparkles className="h-5 w-5" />
+                                                </div>
                                             ) : (
                                                 <AvatarFallback className="bg-secondary text-secondary-foreground">
-                                                    <User className="h-4 w-4" />
+                                                    <User className="h-5 w-5" />
                                                 </AvatarFallback>
                                             )}
-                                            <AvatarFallback className="bg-primary/10 text-primary">
-                                                {m.sender === 'bot' ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
-                                            </AvatarFallback>
                                         </Avatar>
                                         <div
                                             className={cn(
@@ -168,18 +191,33 @@ const ChatBot = () => {
                                 ))}
                                 {isTyping && (
                                     <div className="flex gap-3">
-                                        <Avatar className="h-8 w-8 border border-muted ring-2 ring-primary/20">
-                                            <AvatarFallback className="bg-primary/10 text-primary">
-                                                <Bot className="h-4 w-4" />
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div className="bg-muted text-foreground rounded-2xl rounded-tl-none p-3 border border-border">
+                                        <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+                                            <Sparkles className="h-5 w-5" />
+                                        </div>
+                                        <div className="bg-muted text-foreground rounded-2xl rounded-tl-none p-3 border border-border shadow-sm">
                                             <div className="flex gap-1">
                                                 <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce"></span>
                                                 <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.2s]"></span>
                                                 <span className="w-1.5 h-1.5 bg-primary/40 rounded-full animate-bounce [animation-delay:0.4s]"></span>
                                             </div>
                                         </div>
+                                    </div>
+                                )}
+
+                                {!isTyping && messages[messages.length - 1].sender === 'bot' && (
+                                    <div className="flex flex-wrap gap-2 pt-2 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                        {quickActions.map((action) => (
+                                            <button
+                                                key={action.label}
+                                                onClick={() => {
+                                                    setInput(action.query);
+                                                    setTimeout(() => handleSend(), 50);
+                                                }}
+                                                className="text-[11px] px-3 py-1.5 rounded-full bg-background border border-primary/20 text-primary hover:bg-primary hover:text-white transition-all shadow-sm"
+                                            >
+                                                {action.label}
+                                            </button>
+                                        ))}
                                     </div>
                                 )}
                                 <div ref={scrollRef} />

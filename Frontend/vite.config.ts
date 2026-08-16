@@ -20,6 +20,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: "../dist",
     emptyOutDir: true,
+    chunkSizeWarningLimit: 3000,
   },
   resolve: {
     alias: {

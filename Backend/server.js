@@ -18,7 +18,7 @@ import nodemailer from 'nodemailer';
 const JWT_SECRET = process.env.JWT_SECRET || 'royalstone_secret_key_123';
 const EMAIL_USER = process.env.EMAIL_USER || 'vajirask249@gmail.com';
 const EMAIL_PASS = process.env.EMAIL_PASS || 'crtu wfmb ebqi dkku';
-const MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://royalstone:roylstone1234@royalai.ftgyfay.mongodb.net/?appName=RoyalAI';
+const MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://vajirask249_db_user:zKKIu8O3HRSg1uU2@cluster0.nx1ewgq.mongodb.net/?appName=Cluster0';
 
 const app = express();
 const PORT = process.env.PORT || 5000;

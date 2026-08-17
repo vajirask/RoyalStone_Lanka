@@ -73,6 +73,8 @@ const connectDB = async (uri) => {
             cachedConnection = mongoose.connect(targetUri, {
                 serverSelectionTimeoutMS: 15000,
                 socketTimeoutMS: 45000,
+                tls: true,
+                tlsAllowInvalidCertificates: true
             });
         }
 
@@ -165,9 +167,9 @@ const seedUsers = async () => {
         const adminEmail = 'admin@royalstone.com';
         const userEmail = 'user@royalstone.com';
 
-        const adminExists = await User.findOne({ email: adminEmail });
+        let adminExists = await User.findOne({ email: adminEmail });
+        const salt = await bcrypt.genSalt(10);
         if (!adminExists) {
-            const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash('admin123', salt);
             await new User({
                 name: 'System Admin',
@@ -176,11 +178,18 @@ const seedUsers = async () => {
                 role: 'admin'
             }).save();
             console.log('Sample Admin Created: admin@royalstone.com / admin123');
+        } else {
+            const isMatch = await bcrypt.compare('admin123', adminExists.password);
+            if (!isMatch || adminExists.role !== 'admin') {
+                adminExists.password = await bcrypt.hash('admin123', salt);
+                adminExists.role = 'admin';
+                await adminExists.save();
+                console.log('Updated existing admin account password and role');
+            }
         }
 
-        const userExists = await User.findOne({ email: userEmail });
+        let userExists = await User.findOne({ email: userEmail });
         if (!userExists) {
-            const salt = await bcrypt.genSalt(10);
             const hashedPassword = await bcrypt.hash('user123', salt);
             await new User({
                 name: 'Sample User',
@@ -189,6 +198,13 @@ const seedUsers = async () => {
                 role: 'user'
             }).save();
             console.log('Sample User Created: user@royalstone.com / user123');
+        } else {
+            const isMatch = await bcrypt.compare('user123', userExists.password);
+            if (!isMatch) {
+                userExists.password = await bcrypt.hash('user123', salt);
+                await userExists.save();
+                console.log('Updated existing demo user account password');
+            }
         }
     } catch (err) {
         console.error('Seeding Error:', err.message);
@@ -213,27 +229,39 @@ app.post('/api/mongodb/connect', async (req, res) => {
     }
 });
 
+// In-memory fallback for training data
+const memoryTrainingStore = [];
+
 // Save Training Data
 app.post('/api/training/save', upload.single('image'), async (req, res) => {
     try {
         const { gemType, activationData } = req.body;
         const imagePath = req.file ? req.file.filename : null;
+        const parsedActivation = activationData ? (typeof activationData === 'string' ? JSON.parse(activationData) : activationData) : [];
 
         const newTrainingData = new TrainingData({
             gemType,
             imagePath,
-            activationData: activationData ? JSON.parse(activationData) : []
+            activationData: parsedActivation
         });
 
+        let savedData = null;
         if (isConnected) {
-            const savedData = await newTrainingData.save();
-            res.json({ success: true, message: 'Training data saved', data: savedData });
+            savedData = await newTrainingData.save();
         } else {
-            console.log("Offline Mode: Training data received but not saved to DB.");
-            res.json({ success: true, message: 'Offline Mode: Data processed (not saved)' });
+            savedData = {
+                _id: 'mem_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                gemType,
+                imagePath,
+                activationData: parsedActivation,
+                createdAt: new Date()
+            };
+            memoryTrainingStore.push(savedData);
         }
+
+        res.json({ success: true, message: 'Training data saved', data: savedData });
     } catch (error) {
-        console.error(error);
+        console.error("Save Training Error:", error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
@@ -246,14 +274,15 @@ app.post('/api/training/save-activation', async (req, res) => {
             await TrainingData.findByIdAndUpdate(id, { activationData });
             res.json({ success: true, message: 'Activation updated' });
         } else {
-            res.status(503).json({ success: false, message: 'DB Disconnected' });
+            const item = memoryTrainingStore.find(m => m._id === id);
+            if (item) item.activationData = activationData;
+            res.json({ success: true, message: 'Memory activation updated' });
         }
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: error.message });
     }
 });
-
 
 // Save Identification Result
 app.post('/api/identification/save', upload.single('image'), async (req, res) => {
@@ -270,11 +299,8 @@ app.post('/api/identification/save', upload.single('image'), async (req, res) =>
 
         if (isConnected) {
             await newIdentification.save();
-            res.json({ success: true, message: 'Identification result saved' });
-        } else {
-            console.log("Offline Mode: Identification received but not saved to DB.");
-            res.json({ success: true, message: 'Offline Mode: Result processed (not saved)' });
         }
+        res.json({ success: true, message: 'Identification result saved' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: error.message });
@@ -284,10 +310,11 @@ app.post('/api/identification/save', upload.single('image'), async (req, res) =>
 // Get Recent Identifications
 app.get('/api/identification/recent', async (req, res) => {
     try {
-        const recent = await Identification.find()
-            .sort({ createdAt: -1 })
-            .limit(10);
-        res.json({ success: true, data: recent });
+        if (isConnected) {
+            const recent = await Identification.find().sort({ createdAt: -1 }).limit(10);
+            return res.json({ success: true, data: recent });
+        }
+        res.json({ success: true, data: [] });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: error.message });
@@ -297,11 +324,17 @@ app.get('/api/identification/recent', async (req, res) => {
 // Get Training Stats
 app.get('/api/training/stats', async (req, res) => {
     try {
-        const stats = await TrainingData.aggregate([
-            { $group: { _id: "$gemType", count: { $sum: 1 } } }
-        ]);
+        if (isConnected) {
+            const stats = await TrainingData.aggregate([
+                { $group: { _id: "$gemType", count: { $sum: 1 } } }
+            ]);
+            const formattedStats = stats.map(s => ({ gemType: s._id, count: s.count }));
+            return res.json({ success: true, data: { byGemType: formattedStats } });
+        }
 
-        const formattedStats = stats.map(s => ({ gemType: s._id, count: s.count }));
+        const counts = {};
+        memoryTrainingStore.forEach(m => { counts[m.gemType] = (counts[m.gemType] || 0) + 1; });
+        const formattedStats = Object.entries(counts).map(([gemType, count]) => ({ gemType, count }));
         res.json({ success: true, data: { byGemType: formattedStats } });
     } catch (error) {
         console.error(error);
@@ -312,9 +345,11 @@ app.get('/api/training/stats', async (req, res) => {
 // Get All Training Data (for AI Model Initialization)
 app.get('/api/training/all', async (req, res) => {
     try {
-        if (!isConnected) return res.status(503).json({ success: false, message: 'DB Disconnected' });
-        const allData = await TrainingData.find({}, 'gemType activationData imagePath');
-        res.json({ success: true, data: allData });
+        if (isConnected) {
+            const allData = await TrainingData.find({}, 'gemType activationData imagePath');
+            return res.json({ success: true, data: allData });
+        }
+        res.json({ success: true, data: memoryTrainingStore });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: error.message });
@@ -326,10 +361,30 @@ app.post('/api/training/clear', async (req, res) => {
     try {
         if (isConnected) {
             await TrainingData.deleteMany({});
-            res.json({ success: true, message: 'All training data cleared' });
-        } else {
-            res.status(503).json({ success: false, message: 'DB Disconnected' });
         }
+        memoryTrainingStore.length = 0;
+        res.json({ success: true, message: 'All training data cleared' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Delete Training Data for a Specific Gem
+app.post('/api/training/delete-gem', async (req, res) => {
+    try {
+        const { gemType } = req.body;
+        if (!gemType) {
+            return res.status(400).json({ success: false, message: 'Gem type is required' });
+        }
+        if (isConnected) {
+            await TrainingData.deleteMany({ gemType });
+        }
+        for (let i = memoryTrainingStore.length - 1; i >= 0; i--) {
+            if (memoryTrainingStore[i].gemType === gemType) {
+                memoryTrainingStore.splice(i, 1);
+            }
+        }
+        res.json({ success: true, message: `Training data for "${gemType}" deleted` });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }

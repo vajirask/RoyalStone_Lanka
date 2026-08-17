@@ -1,11 +1,27 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import logo from "@/assets/logo.png";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Menu, Home as HomeIcon, ShoppingBag, BookOpen, Sparkles, User, ChevronRight, Target, Rocket } from "lucide-react";
+import { 
+  ShoppingCart, 
+  Menu, 
+  Home as HomeIcon, 
+  ShoppingBag, 
+  BookOpen, 
+  Sparkles, 
+  User, 
+  ChevronRight, 
+  Target, 
+  LogOut, 
+  ShieldCheck, 
+  UserCheck, 
+  LayoutDashboard,
+  Cpu
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useCart } from "@/context/CartContext";
 import { NavLink } from "@/components/NavLink";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const Navbar = () => {
@@ -14,6 +30,7 @@ const Navbar = () => {
   const [user, setUser] = useState<any>(null);
   const { totalItems } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,7 +40,6 @@ const Navbar = () => {
       const aboutSection = document.getElementById("about");
       if (aboutSection) {
         const rect = aboutSection.getBoundingClientRect();
-        // If the section is in the top portion of the screen
         if (rect.top <= 150 && rect.bottom >= 150) {
           setActiveHash("#about");
         } else if (window.scrollY < 100) {
@@ -31,6 +47,7 @@ const Navbar = () => {
         }
       }
     };
+
     const checkUser = () => {
       const savedUser = localStorage.getItem("user");
       if (savedUser) {
@@ -48,6 +65,7 @@ const Navbar = () => {
     window.addEventListener("storage", checkUser);
     handleScroll(); // Initial check
     checkUser();
+
     return () => {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("storage", checkUser);
@@ -58,8 +76,12 @@ const Navbar = () => {
     localStorage.removeItem("user");
     localStorage.removeItem("token");
     setUser(null);
-    window.location.href = "/";
+    window.dispatchEvent(new Event("storage"));
+    toast.success("Logged out successfully");
+    navigate("/");
   };
+
+  const isAdmin = user?.role?.toLowerCase() === 'admin' || user?.email === 'admin@royalstone.com';
 
   const navigation = [
     { name: "Home", href: "/", icon: HomeIcon },
@@ -67,6 +89,7 @@ const Navbar = () => {
     { name: "Shop", href: "/marketplace", icon: ShoppingBag },
     { name: "Gem Guide", href: "/education", icon: BookOpen },
     { name: "AI Recognition", href: "/ai-recognition", icon: Sparkles },
+    ...(isAdmin ? [{ name: "Admin Panel", href: "/admin", icon: LayoutDashboard }] : [])
   ];
 
   return (
@@ -138,7 +161,7 @@ const Navbar = () => {
           </div>
 
           {/* Right Side Actions */}
-          <div className="flex items-center space-x-1 sm:space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <Link to="/cart">
               <Button
                 variant="ghost"
@@ -155,21 +178,43 @@ const Navbar = () => {
             </Link>
 
             {user ? (
-              <div className="flex items-center gap-4">
-                <span className="hidden sm:inline text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                  {user.name} ({user.role || (user.email === 'admin@royalstone.com' ? 'admin' : 'user')})
-                </span>
+              <div className="flex items-center gap-2 sm:gap-3 bg-muted/40 border border-border/80 rounded-full p-1 pl-2 sm:pl-3 shadow-sm">
+                {/* User Info Details */}
+                <div className="flex items-center gap-2 pr-1">
+                  <div className={cn(
+                    "flex h-7 w-7 items-center justify-center rounded-full text-xs font-black shadow-inner",
+                    isAdmin ? "bg-amber-500/20 text-amber-600 border border-amber-500/40" : "bg-primary/20 text-primary border border-primary/40"
+                  )}>
+                    {isAdmin ? <ShieldCheck className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-bold text-foreground leading-tight max-w-[100px] truncate sm:max-w-[140px]">
+                      {user.name || (isAdmin ? "Admin" : "User")}
+                    </span>
+                    <span className={cn(
+                      "text-[9px] font-black uppercase tracking-wider leading-none mt-0.5",
+                      isAdmin ? "text-amber-600 font-extrabold" : "text-muted-foreground"
+                    )}>
+                      {isAdmin ? "🛡️ Admin" : "👤 User"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Clear Logout Button */}
                 <Button
                   onClick={handleLogout}
-                  variant="premium"
-                  className="h-10 rounded-full px-8 font-bold shadow-lg hover:shadow-primary/30 active:scale-95 transition-all text-sm group/btn"
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 rounded-full px-3 text-xs font-bold gap-1.5 shadow-sm hover:shadow-destructive/20 active:scale-95 transition-all"
+                  title="Sign out of your account"
                 >
-                  <span className="relative z-10">Logout</span>
+                  <LogOut className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Logout</span>
                 </Button>
               </div>
             ) : (
               <Link to="/login" className="hidden md:block">
-                <Button variant="premium" className="h-10 rounded-full px-8 font-bold shadow-lg hover:shadow-primary/30 active:scale-95 transition-all text-sm group/btn">
+                <Button variant="premium" className="h-10 rounded-full px-7 font-bold shadow-lg hover:shadow-primary/30 active:scale-95 transition-all text-sm group/btn">
                   <span className="relative z-10">Sign In</span>
                   <Sparkles className="ml-2 h-4 w-4 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
                 </Button>
@@ -202,8 +247,8 @@ const Navbar = () => {
                     </div>
                   </SheetHeader>
 
-                  <div className="flex flex-col gap-3 p-6 mt-4">
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] px-3 mb-2 opacity-60">
+                  <div className="flex flex-col gap-2.5 p-6 mt-2 overflow-y-auto">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] px-3 mb-1 opacity-60">
                       Discovery
                     </p>
                     {navigation.map((item, index) => {
@@ -213,24 +258,24 @@ const Navbar = () => {
                           key={item.name}
                           to={item.href}
                           className={cn(
-                            "flex items-center justify-between px-5 py-5 rounded-2xl transition-all duration-500 group border border-transparent hover:translate-x-2",
+                            "flex items-center justify-between px-4 py-3.5 rounded-2xl transition-all duration-300 group border border-transparent",
                             isActive
                               ? "bg-primary/10 text-primary border-primary/20 shadow-md translate-x-1"
                               : "hover:bg-muted/50 hover:border-border/50"
                           )}
                           style={{ transitionDelay: `${index * 50}ms` }}
                         >
-                          <div className="flex items-center gap-5">
+                          <div className="flex items-center gap-4">
                             <div className={cn(
-                              "flex h-12 w-12 items-center justify-center rounded-xl transition-all duration-500 shadow-sm",
-                              isActive ? "bg-primary text-white scale-110 rotate-3" : "bg-background border border-border group-hover:scale-110"
+                              "flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-300 shadow-sm",
+                              isActive ? "bg-primary text-white scale-105 rotate-2" : "bg-background border border-border group-hover:scale-105"
                             )}>
-                              <item.icon className="h-6 w-6" />
+                              <item.icon className="h-5 w-5" />
                             </div>
-                            <span className="font-bold text-xl">{item.name}</span>
+                            <span className="font-bold text-base">{item.name}</span>
                           </div>
                           <ChevronRight className={cn(
-                            "h-5 w-5 transition-all duration-500",
+                            "h-5 w-5 transition-all duration-300",
                             isActive ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0"
                           )} />
                         </NavLink>
@@ -238,19 +283,53 @@ const Navbar = () => {
                     })}
                   </div>
 
-                  <div className="mt-auto p-8 space-y-4">
-                    <Link to="/login" className="block w-full">
-                      <Button className="w-full h-15 rounded-2xl text-lg font-black gap-3 shadow-2xl shadow-primary/20 bg-gradient-to-r from-primary to-primary-dark hover:scale-[1.02] active:scale-95 transition-all py-8" variant="default">
-                        <User className="h-6 w-6 shrink-0" />
-                        Sign In Now
-                      </Button>
-                    </Link>
-                    <div className="flex items-center justify-between px-2 pt-6">
-                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">© 2024 Royalstone Lanka</p>
-                      <div className="flex gap-4">
-                        <div className="h-1 w-1 rounded-full bg-primary animate-pulse" />
-                        <div className="h-1 w-1 rounded-full bg-primary/60 animate-pulse delay-75" />
-                        <div className="h-1 w-1 rounded-full bg-primary/30 animate-pulse delay-150" />
+                  {/* Mobile Footer Auth Section */}
+                  <div className="mt-auto p-6 space-y-4 border-t border-border/50 bg-background/40 backdrop-blur-md">
+                    {user ? (
+                      <div className="space-y-3">
+                        <div className="rounded-2xl border border-border bg-card p-4 shadow-sm flex items-center gap-3">
+                          <div className={cn(
+                            "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl font-bold shadow-sm",
+                            isAdmin ? "bg-amber-500/20 text-amber-600 border border-amber-500/40" : "bg-primary/20 text-primary border border-primary/40"
+                          )}>
+                            {isAdmin ? <ShieldCheck className="h-6 w-6" /> : <User className="h-6 w-6" />}
+                          </div>
+                          <div className="flex flex-col min-w-0 flex-1">
+                            <span className="font-bold text-sm text-foreground truncate">{user.name}</span>
+                            <span className="text-xs text-muted-foreground truncate">{user.email}</span>
+                            <span className={cn(
+                              "text-[10px] font-black uppercase tracking-wider mt-0.5",
+                              isAdmin ? "text-amber-600" : "text-primary"
+                            )}>
+                              {isAdmin ? "🛡️ System Administrator" : "👤 Verified Customer"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <Button 
+                          onClick={handleLogout}
+                          variant="destructive"
+                          className="w-full h-12 rounded-xl text-sm font-bold gap-2 shadow-md hover:scale-[1.01] active:scale-95 transition-all"
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Log Out
+                        </Button>
+                      </div>
+                    ) : (
+                      <Link to="/login" className="block w-full">
+                        <Button className="w-full h-13 rounded-2xl text-base font-black gap-2.5 shadow-2xl shadow-primary/20 bg-gradient-to-r from-primary to-primary-dark hover:scale-[1.02] active:scale-95 transition-all py-6" variant="default">
+                          <User className="h-5 w-5 shrink-0" />
+                          Sign In / Register
+                        </Button>
+                      </Link>
+                    )}
+
+                    <div className="flex items-center justify-between px-2 pt-2">
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">© Royalstone Lanka</p>
+                      <div className="flex gap-2">
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary/60 animate-pulse delay-75" />
+                        <div className="h-1.5 w-1.5 rounded-full bg-primary/30 animate-pulse delay-150" />
                       </div>
                     </div>
                   </div>

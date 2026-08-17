@@ -50,6 +50,26 @@ const AdminPanel = () => {
           ))}
         </div>
 
+        {/* AI Neural Training Studio Quick Access Banner */}
+        <Card className="mb-8 border-primary/30 bg-gradient-to-r from-primary/10 via-background to-primary/5">
+          <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
+                <Package className="h-7 w-7" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-foreground">AI Gemstone Training & Model Studio</h3>
+                <p className="text-sm text-muted-foreground">Train new gemstone varieties, upload dataset photos, and manage active neural embeddings.</p>
+              </div>
+            </div>
+            <a href="/ai-recognition">
+              <Button size="lg" className="font-bold shadow-md">
+                Open AI Training Studio
+              </Button>
+            </a>
+          </CardContent>
+        </Card>
+
         {/* Pending Approvals */}
         <Card>
           <CardHeader>

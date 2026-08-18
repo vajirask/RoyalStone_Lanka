@@ -587,6 +587,19 @@ app.post('/api/orders', async (req, res) => {
 
 // ------------------------------
 
+// Serve frontend static files in production
+const distPath = path.join(__dirname, '..', 'dist');
+if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    // SPA fallback: serve index.html for all non-API routes
+    app.get('*', (req, res) => {
+        if (!req.path.startsWith('/api')) {
+            res.sendFile(path.join(distPath, 'index.html'));
+        }
+    });
+    console.log('📦 Serving frontend from:', distPath);
+}
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

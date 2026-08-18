@@ -9,7 +9,9 @@
     "build:dev": "vite build Frontend --mode development",
     "lint": "eslint .",
     "preview": "vite preview Frontend",
-    "server": "node Backend/server.js"
+    "server": "node Backend/server.js",
+    "render-build": "npm install && npm run build",
+    "render-start": "node Backend/server.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

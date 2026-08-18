@@ -492,7 +492,7 @@ const AIRecognition = () => {
     }
   }, []);
 
-  // High-speed initialize AI Engine
+  // High-speed initialize AI Engine with clean Single-Source-of-Truth loading
   const loadAIEngine = useCallback(async () => {
     setModelLoading(true);
     try {
@@ -507,37 +507,41 @@ const AIRecognition = () => {
         setNet(model.net);
         setClassifier(model.classifier);
 
-        // Load local classifier dataset
-        loadFromStorage(model.classifier);
-        refreshCounts(model.classifier);
+        // Fetch real training dataset from MongoDB backend as the single source of truth
+        try {
+          const res = await fetch(getApiUrl("/api/training/all"));
+          const { success, data } = await res.json();
 
-        // Sync real training dataset from backend in background
-        fetch(getApiUrl("/api/training/all"))
-          .then(r => r.json())
-          .then(({ success, data }) => {
-            if (success && Array.isArray(data) && data.length > 0 && model.classifier) {
-              let updated = false;
-              for (const sample of data) {
-                if (loadedGemIds.current.has(sample._id)) continue;
-                if (!sample.activationData?.length) continue;
-                if (sample.activationData.every((v: number) => v === 0)) continue;
-                const act = tf.tensor(sample.activationData, [1, sample.activationData.length]);
-                model.classifier.addExample(act, sample.gemType);
-                act.dispose();
-                loadedGemIds.current.add(sample._id);
-                updated = true;
+          if (success && Array.isArray(data)) {
+            // Reset classifier to prevent duplicate sample accumulation
+            model.classifier.clearAllClasses();
+            loadedGemIds.current.clear();
 
-                if (!gemList.includes(sample.gemType)) {
-                  setGemList(prev => [...prev, sample.gemType]);
-                }
-              }
-              if (updated) {
-                saveToStorage(model.classifier);
-                refreshCounts(model.classifier);
+            for (const sample of data) {
+              if (!sample.activationData?.length) continue;
+              if (sample.activationData.every((v: number) => v === 0)) continue;
+              const act = tf.tensor(sample.activationData, [1, sample.activationData.length]);
+              model.classifier.addExample(act, sample.gemType);
+              act.dispose();
+              loadedGemIds.current.add(sample._id);
+
+              if (!gemList.includes(sample.gemType)) {
+                setGemList(prev => [...prev, sample.gemType]);
               }
             }
-          })
-          .catch(e => console.warn("Backend training sync skipped:", e));
+            saveToStorage(model.classifier);
+            refreshCounts(model.classifier);
+          } else {
+            // Offline fallback: load from local storage
+            loadFromStorage(model.classifier);
+            refreshCounts(model.classifier);
+          }
+        } catch (dbErr) {
+          // Offline fallback
+          console.warn("Backend training sync skipped, using local cache:", dbErr);
+          loadFromStorage(model.classifier);
+          refreshCounts(model.classifier);
+        }
       }
     } catch (err) {
       console.error("AI Init error:", err);

@@ -39,16 +39,22 @@ try {
 }
 
 // Multer setup for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, uploadDir);
-    },
-    filename: (req, file, cb) => {
-        cb(null, Date.now() + '-' + file.originalname);
-    }
-});
-
-const upload = multer({ storage });
+// Use memory storage for serverless (Vercel), disk storage for local/Render
+const isServerless = process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME;
+let upload;
+if (isServerless) {
+    upload = multer({ storage: multer.memoryStorage() });
+} else {
+    const storage = multer.diskStorage({
+        destination: (req, file, cb) => {
+            cb(null, uploadDir);
+        },
+        filename: (req, file, cb) => {
+            cb(null, Date.now() + '-' + file.originalname);
+        }
+    });
+    upload = multer({ storage });
+}
 
 // Default connection string from env
 const DEFAULT_MONGO_URI = MONGO_URI;

@@ -57,7 +57,8 @@ if (isServerless) {
 }
 
 // Default connection string from env
-const DEFAULT_MONGO_URI = MONGO_URI;
+const FALLBACK_DIRECT_MONGO_URI = 'mongodb://vajirask249_db_user:zKKIu8O3HRSg1uU2@ac-lexrp1j-shard-00-00.nx1ewgq.mongodb.net:27017,ac-lexrp1j-shard-00-01.nx1ewgq.mongodb.net:27017,ac-lexrp1j-shard-00-02.nx1ewgq.mongodb.net:27017/royalstone?ssl=true&replicaSet=atlas-g1quo5-shard-0&authSource=admin&retryWrites=true&w=majority';
+const DEFAULT_MONGO_URI = process.env.MONGODB_URI || 'mongodb+srv://vajirask249_db_user:zKKIu8O3HRSg1uU2@cluster0.nx1ewgq.mongodb.net/royalstone?retryWrites=true&w=majority&appName=Cluster0';
 
 // MongoDB Connection Caching for Serverless
 let isConnected = false;
@@ -72,12 +73,12 @@ const connectDB = async (uri) => {
     const targetUri = uri || process.env.MONGODB_URI || DEFAULT_MONGO_URI;
 
     try {
-        console.log("Attempting MongoDB connection (Optimized)...");
+        console.log("Attempting MongoDB connection...");
 
         // In serverless, we reuse the connection promise if it exists
         if (!cachedConnection || mongoose.connection.readyState === 0) {
             cachedConnection = mongoose.connect(targetUri, {
-                serverSelectionTimeoutMS: 15000,
+                serverSelectionTimeoutMS: 8000,
                 socketTimeoutMS: 45000,
                 tls: true,
                 tlsAllowInvalidCertificates: true
@@ -90,10 +91,25 @@ const connectDB = async (uri) => {
         seedUsers();
         return true;
     } catch (err) {
-        console.error('❌ MongoDB Connection Error:', err.message);
-        isConnected = false;
-        cachedConnection = null;
-        return false;
+        console.warn('⚠️ Primary MongoDB connection failed, trying Direct ReplicaSet fallback...', err.message);
+        try {
+            cachedConnection = mongoose.connect(FALLBACK_DIRECT_MONGO_URI, {
+                serverSelectionTimeoutMS: 8000,
+                socketTimeoutMS: 45000,
+                tls: true,
+                tlsAllowInvalidCertificates: true
+            });
+            await cachedConnection;
+            isConnected = true;
+            console.log('✅ MongoDB Connected via Direct ReplicaSet');
+            seedUsers();
+            return true;
+        } catch (fallbackErr) {
+            console.error('❌ MongoDB Connection Error:', fallbackErr.message);
+            isConnected = false;
+            cachedConnection = null;
+            return false;
+        }
     }
 };
 

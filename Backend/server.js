@@ -613,11 +613,12 @@ app.post('/api/orders', async (req, res) => {
 const distPath = path.join(__dirname, '..', 'dist');
 if (fs.existsSync(distPath)) {
     app.use(express.static(distPath));
-    // SPA fallback: serve index.html for all non-API routes
-    app.get('*', (req, res) => {
-        if (!req.path.startsWith('/api')) {
-            res.sendFile(path.join(distPath, 'index.html'));
+    // SPA fallback: serve index.html for all non-API routes (Express 5 compatible)
+    app.use((req, res, next) => {
+        if (req.method === 'GET' && !req.path.startsWith('/api')) {
+            return res.sendFile(path.join(distPath, 'index.html'));
         }
+        next();
     });
     console.log('📦 Serving frontend from:', distPath);
 }
